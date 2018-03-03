@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.HashMap;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -17,6 +18,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import java.util.HashMap;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -26,12 +30,14 @@ public class GUI_Display extends JFrame {
 
     public GUI_Display() {
         initComponents();
+        GUI_Display.studentDatabase = new HashMap<>();
     }
     
     //Create text fields, ratdio buttons, and compute button
     private JButton processRequestButton;
     private JTextField idField, nameField, majorField;
     private JComboBox dropDown;
+    private static HashMap<Integer, Student> studentDatabase;
     
     private void initComponents() {
         setTitle("Project 4");
@@ -70,8 +76,8 @@ public class GUI_Display extends JFrame {
         String[] actions = {"Insert", "Delete", "Find", "Update"};
         dropDown = new JComboBox(actions);
         dropDown.setPreferredSize(dim);
-        dropDown.addActionListener(event -> dropDownItemChanged());
         processRequestButton = new JButton("Process Request");
+        processRequestButton.addActionListener(event -> processRequest());
         inputPanel.add(new JLabel("Choose Selection: "), getConstraints(0,3, labelInsets));
         inputPanel.add(dropDown, getConstraints(1, 3, textBoxInsets));
         inputPanel.add(processRequestButton, getConstraints(0, 4, new Insets(10, 0, 10, 10)));
@@ -79,6 +85,7 @@ public class GUI_Display extends JFrame {
         //Set visible
         add(inputPanel, BorderLayout.CENTER);
         setVisible(true);
+        
     }
     
     private GridBagConstraints getConstraints(int x, int y, Insets i) {
@@ -90,8 +97,171 @@ public class GUI_Display extends JFrame {
         return c;
     }
     
-    public void dropDownItemChanged() {
+    private void processRequest() {
+        String userChoice = (String) dropDown.getSelectedItem();
+        if  (userChoice.equals("Insert")) {
+            performInsert();
+        }
+        else if  (userChoice.equals("Delete")) {
+            performDelete();
+        }
+        else if  (userChoice.equals("Find")) {
+            performFind();
+        }
+        else if  (userChoice.equals("Update")) {
+            performUpdate();
+        }
+    }
+    
+    private void performInsert() {
+        try {
+            Integer studentID = Integer.parseInt(idField.getText());
         
+ 
+            if (studentDatabase.containsKey(studentID)) {
+                JOptionPane.showMessageDialog(this, 
+                    "Student ID " + studentID.toString() + " is already in the database.", 
+                    "Database Error: ", 
+                    JOptionPane.PLAIN_MESSAGE);
+            }
+            else {
+                String name = nameField.getText();
+                String major = majorField.getText();
+                Student newStudent = new Student(name, major, 0, 0);
+                studentDatabase.put(studentID, newStudent);
+                JOptionPane.showMessageDialog(this, 
+                    "Student ID " + studentID.toString() + " added to database "
+                            + "with:\nName: " + name + "\nMajor: " + major, 
+                    "Success: ", 
+                    JOptionPane.PLAIN_MESSAGE);
+            }
+        }
+        catch (NumberFormatException e) {
+            idError();
+        }
+    }
+    
+    private void performDelete() {
+        try {
+            Integer studentID = Integer.parseInt(idField.getText());
+        
+            if (!checkExists(studentID)) {
+                dbError();
+            }
+            else {
+                studentDatabase.remove(studentID);
+                JOptionPane.showMessageDialog(this, 
+                    "Student ID " + studentID.toString() + " removed from database.", 
+                    "Success: ", 
+                    JOptionPane.PLAIN_MESSAGE);
+            }
+        }
+        catch (NumberFormatException e) {
+            idError();
+        }
+    }
+    
+    private void performFind() {
+        try {
+            Integer studentID = Integer.parseInt(idField.getText());       
+            if (!checkExists(studentID)) {
+                dbError();
+            }
+            else {
+                Student s = studentDatabase.get(studentID);
+                studentDatabase.get(studentID);
+                JOptionPane.showMessageDialog(this, 
+                "Student ID: " + studentID.toString() + "\n " + s.toString(),
+                    "Student found: ", 
+                    JOptionPane.PLAIN_MESSAGE);
+            }
+        }
+        catch (NumberFormatException e) {
+                idError();
+        }
+    }
+    
+    private void performUpdate() {
+        try {
+            Integer studentID = Integer.parseInt(idField.getText());
+               
+            if (!checkExists(studentID)) {
+                dbError();
+            }
+            else {
+                getOptionsAndUpdateStudent(studentID);
+            }
+        }
+        catch (NumberFormatException e) {
+            idError();
+        }
+    }
+        
+    private boolean checkExists(int dbkey) {
+        if (!studentDatabase.containsKey(dbkey)) {return false;} 
+        else {return true;}
+    }
+    
+    private void dbError() {
+        JOptionPane.showMessageDialog(this, 
+                "Student ID is not in the database.", 
+                "Database Error: ", 
+                JOptionPane.INFORMATION_MESSAGE);        
+    }
+    
+    private void idError() {
+        JOptionPane.showMessageDialog(this, 
+                "Not a valid ID. Please input a number", 
+                "Database Error: ", 
+                JOptionPane.ERROR_MESSAGE);   
+    }
+    
+    private void getOptionsAndUpdateStudent(int studentID) {
+        Student s = studentDatabase.get(studentID);
+        String[] grades= {"A","B","C","D","F"};
+        String[] credits= {"3","6"};
+
+        
+        JPanel dialogPanel = new JPanel();
+        JPanel dialogPanel2 = new JPanel();
+        
+
+        //create a JOptionPane
+        Object[] options = new Object[]{};
+        JOptionPane jopGrade = new JOptionPane();
+        Object gradeInput = JOptionPane.showInputDialog(dialogPanel, "Choose grade:", //parentComponent, message
+                                        null, //Title of window
+                                        JOptionPane.QUESTION_MESSAGE, //messageType
+                                        null, grades, null); //icon, selectionValues, initialSelectionValue
+        JOptionPane jopCredit = new JOptionPane();
+        Object creditInput = JOptionPane.showInputDialog(dialogPanel2, "Choose credits:", //parentComponent, message
+                                        null, //Title of window
+                                        JOptionPane.QUESTION_MESSAGE, //messageType
+                                        null, credits, null);
+        System.out.println(gradeInput.toString());
+        System.out.println(creditInput.toString());
+        //add combos to JOptionPane
+        dialogPanel.setVisible(true);
+        dialogPanel2.setVisible(true);
+        double credit = Double.parseDouble(creditInput.toString());
+        String grade = gradeInput.toString();
+        switch (grade) {
+            case "A":
+                s.courseComplete(credit, 12.0);
+                break;
+            case "B":
+                s.courseComplete(credit, 9.0);
+                break;
+            case "C":
+                s.courseComplete(credit, 6.0);
+                break;
+            case "D":
+                s.courseComplete(credit, 3.0);
+                break;
+            case "F":
+                s.courseComplete(credit, 0.0);
+                break;
+        }
     }
     
     /**
@@ -99,6 +269,7 @@ public class GUI_Display extends JFrame {
      */
     public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(() -> {
+            JFrame frame = new GUI_Display();
          });
     }
     
